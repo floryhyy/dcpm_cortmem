@@ -357,12 +357,13 @@ display: none;
 
 <div id="load-library" class="section level2">
 <h2>load library</h2>
-<pre class="r"><code>library(nlme)
-library(ggplot2)
-library(emmeans)
-library(sjPlot)</code></pre>
-<pre><code>## Learn more about sjPlot with &#39;browseVignettes(&quot;sjPlot&quot;)&#39;.</code></pre>
-<pre class="r"><code>library(tidyverse)</code></pre>
+<pre class="r"><code># Load required R packages
+library(nlme)       # For fitting linear and nonlinear mixed-effects models
+library(ggplot2)    # For data visualization
+library(emmeans)    # For estimated marginal means (least-squares means)
+library(sjPlot)     # For data visualization and tables</code></pre>
+<pre><code>## #refugeeswelcome</code></pre>
+<pre class="r"><code>library(tidyverse)  # Collection of R packages for data manipulation and visualization</code></pre>
 <pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.2     ✔ readr     2.1.4
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.0
@@ -373,7 +374,7 @@ library(sjPlot)</code></pre>
 ## ✖ dplyr::filter()   masks stats::filter()
 ## ✖ dplyr::lag()      masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(lme4)</code></pre>
+<pre class="r"><code>library(lme4)       # For linear mixed-effects models</code></pre>
 <pre><code>## Loading required package: Matrix
 ## 
 ## Attaching package: &#39;Matrix&#39;
@@ -388,7 +389,7 @@ library(sjPlot)</code></pre>
 ## The following object is masked from &#39;package:nlme&#39;:
 ## 
 ##     lmList</code></pre>
-<pre class="r"><code>library(car)</code></pre>
+<pre class="r"><code>library(car)        # For regression diagnostics and other statistical functions</code></pre>
 <pre><code>## Loading required package: carData
 ## 
 ## Attaching package: &#39;car&#39;
@@ -400,6 +401,32 @@ library(sjPlot)</code></pre>
 ## The following object is masked from &#39;package:purrr&#39;:
 ## 
 ##     some</code></pre>
+<pre class="r"><code># Display R version information
+R.version.string</code></pre>
+<pre><code>## [1] &quot;R version 4.3.1 (2023-06-16)&quot;</code></pre>
+<pre class="r"><code># Display package versions
+packageVersion(&quot;nlme&quot;)</code></pre>
+<pre><code>## [1] &#39;3.1.162&#39;</code></pre>
+<pre class="r"><code>packageVersion(&quot;ggplot2&quot;)</code></pre>
+<pre><code>## [1] &#39;3.4.3&#39;</code></pre>
+<pre class="r"><code>packageVersion(&quot;emmeans&quot;)</code></pre>
+<pre><code>## [1] &#39;1.8.8&#39;</code></pre>
+<pre class="r"><code>packageVersion(&quot;sjPlot&quot;)</code></pre>
+<pre><code>## [1] &#39;2.8.15&#39;</code></pre>
+<pre class="r"><code>packageVersion(&quot;tidyverse&quot;)</code></pre>
+<pre><code>## [1] &#39;2.0.0&#39;</code></pre>
+<pre class="r"><code>packageVersion(&quot;lme4&quot;)</code></pre>
+<pre><code>## [1] &#39;1.1.34&#39;</code></pre>
+<pre class="r"><code>packageVersion(&quot;car&quot;)</code></pre>
+<pre><code>## [1] &#39;3.1.2&#39;</code></pre>
+<pre class="r"><code># To get versions of all loaded packages
+installed.packages()[names(sessionInfo()$otherPkgs), &quot;Version&quot;]</code></pre>
+<pre><code>##       car   carData      lme4    Matrix lubridate   forcats   stringr     dplyr 
+##   &quot;3.1-2&quot;   &quot;3.0-5&quot;  &quot;1.1-34&quot;   &quot;1.6-1&quot;   &quot;1.9.2&quot;   &quot;1.0.0&quot;   &quot;1.5.0&quot;   &quot;1.1.2&quot; 
+##     purrr     readr     tidyr    tibble tidyverse    sjPlot   emmeans   ggplot2 
+##   &quot;1.0.2&quot;   &quot;2.1.4&quot;   &quot;1.3.0&quot;   &quot;3.2.1&quot;   &quot;2.0.0&quot;  &quot;2.8.15&quot;   &quot;1.8.8&quot;   &quot;3.4.3&quot; 
+##      nlme 
+## &quot;3.1-162&quot;</code></pre>
 </div>
 <div id="color-setting" class="section level2">
 <h2>color setting</h2>
