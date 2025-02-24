@@ -1,0 +1,9 @@
+train on,test on,stim,pill,mean_rho,mean_pvalue,pos_rho,pos_pvalue,neg_rho,neg_pvalue,pos network,neg network
+Arous_All,RecogAcc_coded,alc,cortisol,-0.0231523748545835,0.004,NaN,0,0.0167978074760569,0.006,3873,796
+Arous_All,RecogAcc_coded,alc,placebo,NaN,0,0.0125797608125246,0.051,NaN,0,1279,537
+Arous_All,RecogAcc_coded,tool,cortisol,0.0227061425172206,0,NaN,0,0.0279605089501541,0.005,2180,3099
+Arous_All,RecogAcc_coded,tool,placebo,NaN,0,NaN,0,-0.000596574527217259,0.057,854,2154
+RecogAcc_coded,Arous_All,alc,cortisol,0.131056067057516,0,0.114795062071801,0,0.00462853980811321,0.135,521,111
+RecogAcc_coded,Arous_All,alc,placebo,0.00406047355436349,0.118,-0.00288019371329556,0.139,-0.0030616762841705,0.184,192,217
+RecogAcc_coded,Arous_All,tool,cortisol,0.22441427673337,0,0.0841889348223879,0,0.121437655727402,0,582,371
+RecogAcc_coded,Arous_All,tool,placebo,-0.00172370969942417,0.164,-0.0548314644671119,0.394,0.0295875462225145,0.045,515,2423

@@ -1,0 +1,141 @@
+---
+title: "engagement&cofluctuation"
+output: pdf_document
+date: "2024-09-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## load library
+```{r}
+require(nlme)
+require(ggplot2)
+#require(tidyverse)
+#library(sjPlot)
+library(lme4)
+#library(emmeans)
+#library(ordinal)
+#library(dplyr)
+```
+## behavior   
+```{r} 
+  filename='data/behavior/mem_allsub_alltrial_pill.csv'
+  dat<-data.frame(read.csv(filename))
+dat<-dat %>%
+        mutate(RecogAcc_coded = ifelse(RecogAcc==4,0,ifelse(RecogAcc==1,1,NA)),
+               )
+dat<-dat[dat$Subject!="9029",]
+dat$RecogAcc_coded<-factor(dat$RecogAcc_coded)
+```
+
+## Engagement - check pos_neg network strength difference
+```{r}
+filename<-("data/5s_onward/cofluctuation/summary_table_pos_neg_diff.csv")
+dat<-data.frame(read.csv(filename))
+dat <- dat %>% mutate(RunInfo=paste0(Pill,'_',Stim))
+
+m <- lme(pos_neg_diff ~ Stim+Pill+pheno, random=~1 | sub_id, data = dat, na.action = na.omit)
+print(anova(m))
+#print(plot_model(m,type="eff",terms=c("Pill")))
+
+
+m <- lme(pos_neg_diff ~ Pill*pheno+Stim, random=~1 | sub_id, data = dat, na.action = na.omit)
+print(anova(m,type='marginal'))
+p1<-plot_model(m,type="eff",terms=c("pheno","Pill"), ci.lvl = .95,title="")+labs(y = "")+scale_color_manual(  name="Pill",labels=c("Cortisol", "Placebo"),values = c(cortisol_color, placebo_color))+scale_x_discrete(name ="", 
+                    limits=c("Arousal","Memory"))+theme_classic()+
+  theme(axis.text.x = element_text(face = "bold", size = 15),
+          axis.text.y = element_text(face = "bold", size = 15),
+        legend.text=element_text(size=15))
+p1
+print(test(emmeans(m, pairwise~ Pill*pheno)))
+
+m <- lme(pos_neg_diff ~ Pill*Stim+pheno, random=~1 | sub_id, data = dat, na.action = na.omit)
+print(anova(m,type='marginal'))
+p2<-plot_model(m,type="eff",terms=c("Stim","Pill"),ci.lvl = .95,title="")+
+  labs(y = "")+
+  scale_color_manual(  name="Pill",
+                       labels=c("Cortisol", "Placebo"),values = c(cortisol_color, placebo_color))+
+  scale_x_discrete(name ="", 
+                    limits=c("Emotional","Neutral"))+
+  theme_classic()+
+  theme(axis.text.x = element_text(face = "bold", size = 15),
+          axis.text.y = element_text(face = "bold", size = 15),
+        legend.text=element_text(size=15))
+p2
+print(test(emmeans(m, pairwise~ Pill*Stim)))
+
+m <- lme(pos_neg_diff ~ Pill+Stim*pheno, random=~1 | sub_id, data = dat, na.action = na.omit)
+print(anova(m,type='marginal'))
+
+m <- lme(pos_neg_diff ~ Pill*Stim*pheno, random=~1 | sub_id, data = dat, na.action = na.omit)
+print(anova(m,type='marginal'))
+
+```
+## Internetwork cofluctuation - check co-fluctuation by pos_neg network strength difference
+```{r}
+filename<-("../data/5s_onward/cofluctuation/summary_table_pos_neg_diff_corr.csv")
+dat<-data.frame(read.csv(filename))
+filename='../data/mem_allsub_pill.csv'
+#behavior_df<-data.frame(read.csv(filename))
+#behavior_df<-behavior_df[,c('Subject', 'Pill','Stim','hit_rate','Arous_m')]
+#behavior_df<-    behavior_df %>% mutate(Pill=ifelse(grepl('Cortisol', Pill),'cortisol',
+#                         ifelse(grepl('Placebo', Pill),'placebo',NA)))
+  
+#dat<-merge(dat, dat, by.x=c('sub_id','Pill','Stim'), by.y=c('Subject', 'Pill','Stim'))
+
+m <- lme(cofluc ~ Pill+Stim, random=~1 | sub_id, data=dat, na.action = na.omit)
+print(anova(m))
+print(plot_model(m,type="eff",terms=c("Stim")))
+print(plot_model(m,type="eff",terms=c("Pill")))
+
+m <- lme(cofluc ~ Pill*Stim, random=~1 | sub_id, data=dat, na.action = na.omit)
+print(anova(m))
+print(plot_model(m,type="eff",terms=c("Stim","Pill")))
+
+```
+
+## engagement by trial
+```{r}
+
+filename<-("../data/5s_onward/cofluctuation/summary_table_pos_neg_sep_byTrial.csv")
+dat<-data.frame(read.csv(filename))
+dat <- dat%>%
+  # First, fill Arous_All and RecogAcc_coded within each trial, sub_id, Pill, Stim combination
+  group_by(trial_id, sub_id, Pill, Stim) %>%
+  mutate(
+    Arous_All = ifelse(pheno == "RecogAcc_coded", 
+                       Arous_All[pheno == "Arous_All"], 
+                       Arous_All),
+    RecogAcc_coded = ifelse(pheno == "Arous_All", 
+                            RecogAcc_coded[pheno == "RecogAcc_coded"], 
+                            RecogAcc_coded)
+  ) %>%
+  ungroup() %>%
+  # Then proceed with the difference calculation
+  group_by(trial_id, sub_id, Pill, Stim, pheno) %>%
+  summarize(
+    pos_conn = conn[direction == "pos"],
+    neg_conn = conn[direction == "neg"],
+    conn_diff = conn[direction == "pos"] - conn[direction == "neg"],
+    Arous_All = first(Arous_All),
+    RecogAcc_coded = first(RecogAcc_coded),
+    .groups = "drop"
+  )
+write.csv(dat, "../data/5s_onward/cofluctuation/summary_table_pos_neg_sep_byTrial_behaviorFilled.csv", row.names=FALSE)
+
+m <- lme(conn_diff ~ Arous_All+Pill+Stim+trial_id, random=~1 | sub_id, data = dat[(dat$pheno=='RecogAcc_coded'),], na.action = na.omit)
+print(plot_model(m,type="eff",terms=c("Arous_All")))
+print(anova(m))
+
+m <- lme(conn_diff ~ Arous_All*Pill+Stim+trial_id, random=~1 | sub_id, data = dat[(dat$pheno=='RecogAcc_coded'),], na.action = na.omit)
+print(anova(m))
+print(plot_model(m,type="eff",terms=c("Pill","Arous_All")))
+
+m <- lme(neg_conn ~ Arous_All*Pill*Stim+trial_id, random=~1 | sub_id, data = dat[(dat$pheno=='RecogAcc_coded'),], na.action = na.omit)
+print(anova(m))
+print(plot_model(m,type="eff",terms=c("Pill","Stim")))
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

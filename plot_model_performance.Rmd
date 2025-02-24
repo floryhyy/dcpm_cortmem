@@ -1,0 +1,213 @@
+---
+title: "null_distribution"
+output: html_document
+date: "2023-09-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(R.matlab)
+library(tidyverse)
+library(ggridges)
+
+```
+
+```{r}
+
+memory_color = '#4573e0'
+arousal_color = '#45b4af'
+cortisol_color ='#e06545'
+placebo_color = '#b44582' 
+create_data<-function(across_construct=FALSE,across_stim=FALSE){
+  #generate data for plotting dcpm results
+  cpm_dir<-'CPM code/result/permutation/'
+  i<-1
+  for (pill in c('cortisol','placebo')){
+    for (stim in c('alc','tool')){
+      #load data from across construct prediction
+      if (across_construct){
+        memory<-read.csv(paste0(cpm_dir,'Arous_All_RecogAcc_coded_',pill,'_',stim,'_permutation_acc.csv')) 
+        arousal<-readMat(paste0(cpm_dir,'linear_RecogAcc_coded_Arous_All_byTrial_',pill,'_',stim,'_p0.01.mat')) 
+      }
+      
+      #load data from across stimuli prediction
+      else if (across_stim){
+        if (stim=='alc'){
+        memory<-read.csv(paste0(cpm_dir,'RecogAcc_coded_',pill,'_tool_',stim,'_permutation_acc.csv'))
+        arousal<-readMat(paste0(cpm_dir,'linear_Arous_All_byTrial_',pill,'_tool_',stim,'_p0.01.mat')) 
+        }
+      else{
+        memory<-read.csv(paste0(cpm_dir,'RecogAcc_coded_',pill,'_alc_',stim,'_permutation_acc.csv'))
+        arousal<-readMat(paste0(cpm_dir,'linear_Arous_All_byTrial_',pill,'_alc_',stim,'_p0.01.mat')) 
+        }
+      }
+      #load data from basic prediction
+      else{
+        memory<-read.csv(paste0(cpm_dir,'RecogAcc_coded_',pill,'_',stim,'_permutation_acc.csv')) 
+        arousal<-readMat(paste0(cpm_dir,'linear_Arous_All_byTrial_',pill,'_',stim,'_p0.01.mat')) 
+      }
+      
+      #reformat arousal data
+      df<-data.frame(value=arousal$null[, , 1]$mean.r.rank,
+                 pill=pill,
+                 stim=stim,
+                 true_model=arousal$test[, , 1]$performance[, , 1]$mean[, , 1]$r.rank[1])
+      
+      #initialize data
+      if (i<2){
+        memory_final<-memory
+        arousal_final<-df
+      }
+      #combine data
+      else{
+        memory_final<-rbind(memory_final,memory)
+        arousal_final<-rbind(arousal_final,df)
+      }
+      i<-i+1
+    }
+  }
+  names(memory_final)<-c("pill", "stim", "value","true_model")
+  return(list("memory" = memory_final, "arousal" = arousal_final))
+}
+```
+
+# alt vis (for paper) plotting model success vs null distribution
+```{r}
+# plot<-model_dataframe_plot %>% 
+#          mutate(pill = factor(pill, labels = c("Cortisol", "Placebo")),
+#                 stim = factor(stim, labels = c("Emotional", "Neutral")),
+#                 behavior = factor(behavior, labels = c("Arousal", "Memory")))
+
+data<-create_data()
+
+#memory model success plot in accuracy
+fig_model_altvis_mem <- ggplot(dat = data$memory %>% 
+         mutate(pill = factor(pill, labels = c("Cortisol", "Placebo")),
+                stim = factor(stim, labels = c("Emotional", "Neutral"))), 
+       aes(x = pill, y=true_model, color = pill)) + 
+    geom_violin(aes(y = value, group = pill), fill = "gray", color = NA, alpha = .4) +
+    geom_point(size = 2) +
+    ylab('Predicted vs Actual Value (Accuracy)')+
+    xlab('')+
+  guides(color = "none") +
+    scale_color_manual(values = c(cortisol_color, placebo_color))+
+    theme_classic() +
+    facet_grid(cols=vars(stim))
+
+fig_model_altvis_mem
+
+#arousal model success plot in rho
+
+fig_model_altvis_arous <- ggplot(dat = data$arousal %>% 
+         mutate(pill = factor(pill, labels = c("Cortisol", "Placebo")),
+                stim = factor(stim, labels = c("Emotional", "Neutral"))), 
+       aes(x = pill, y=true_model, color = pill)) + 
+    geom_violin(aes(y = value, group = pill), fill = "gray", color = NA, alpha = .4) +
+    geom_point(size = 2) +
+    ylab('Predicted vs Actual Value (rho)')+
+    xlab('')+
+  guides(color = "none") +
+    scale_color_manual(values = c(cortisol_color, placebo_color))+
+    theme_classic() +
+    facet_grid(cols=vars(stim))
+
+fig_model_altvis_arous
+
+pdf("plots/cpm_prediction_results.pdf",height=2.5,width = 4)
+print(fig_model_altvis_arous)
+print(fig_model_altvis_mem)
+dev.off()
+```
+# alt vis (for paper) generalization across construct
+```{r}
+data<-create_data(across_construct = TRUE)
+# model performance using arousal edges to predict  memory
+altvis_arous2mem <- ggplot(dat = data$memory %>% 
+         mutate(pill = factor(pill, labels = c("Cortisol", "Placebo")),
+                stim = factor(stim, labels = c("Emotional", "Neutral"))), 
+       aes(x = pill, y=true_model, color = pill)) + 
+    geom_violin(aes(y = value, group = pill), fill = "gray", color = NA, alpha = .4) +
+    geom_point(size = 2) +
+    ylab('Predicted vs Actual Value (accuracy)')+
+    xlab('')+
+  guides(color = "none") +
+    scale_color_manual(values = c(cortisol_color, placebo_color))+
+    theme_classic() +
+  facet_grid(.~stim)
+
+# all pvalues are close to 1 in this result, can choose to not show this plot directly.
+# Or, In this plot, the cort_alc null model only have 4 unique values, [0.6476378 0.6466535 0.6446850 0.6456693], and mostly0.6476378, so we can just add a grey line around 0.647, above the true model; for cort_tool, null model only has 1 value at 0.6499033, can also add a line.
+altvis_arous2mem
+
+# model performance using memory edges to predict arousal
+altvis_mem2arous <- ggplot(dat = data$arousal %>% 
+         mutate(pill = factor(pill, labels = c("Cortisol", "Placebo")),
+                stim = factor(stim, labels = c("Emotional", "Neutral"))), 
+       aes(x = pill, y=true_model, color = pill)) + 
+    geom_violin(aes(y = value, group = pill), fill = "gray", color = NA, alpha = .4) +
+    geom_point(size = 2) +
+    ylab('Predicted vs Actual Value (rho)')+
+    xlab('')+
+  guides(color = "none") +
+    scale_color_manual(values = c(cortisol_color, placebo_color))+
+    theme_classic() +
+  facet_grid(.~stim)
+
+altvis_mem2arous
+
+pdf("plots/cpm_generalization_constructs.pdf",height=2.5,width = 4)
+print(altvis_mem2arous)
+print(altvis_arous2mem)
+dev.off()
+```
+# alt vis (for paper) generalization across stim
+```{r}
+
+data<-create_data(across_stim = TRUE)
+
+# Memory models: Emotional label means selecting Neutral edges to predict emotional run 
+altvis_mem_crossrun <- ggplot(dat = data$memory %>% 
+         mutate(pill = factor(pill, labels = c("Cortisol", "Placebo")),
+                stim = factor(stim, labels = c("Emotional", "Neutral"))), 
+       aes(x = pill, y=true_model, color = pill)) + 
+    geom_violin(aes(y = value, group = pill), fill = "gray", color = NA, alpha = .4) +
+    geom_point(size = 2) +
+    ylab('Predicted vs Actual Value (accuracy)')+
+    xlab('')+
+  guides(color = "none") +
+    scale_color_manual(values = c(cortisol_color, placebo_color))+
+    theme_classic() +
+  facet_grid(stim~.)
+# For cort emotional plot, the null models only have 3 unique values, [0.6476378 0.6486220 0.6466535], can draw a line around 0.647.
+
+altvis_mem_crossrun
+
+# Arousal models: Emotional label means selecting Neutral edges to predict emotional run 
+altvis_arous_crossrun <- ggplot(dat = data$arousal %>% 
+         mutate(pill = factor(pill, labels = c("Cortisol", "Placebo")),
+                stim = factor(stim, labels = c("Emotional", "Neutral"))), 
+       aes(x = pill, y=true_model, color = pill)) + 
+    geom_violin(aes(y = value, group = pill), fill = "gray", color = NA, alpha = .4) +
+    geom_point(size = 2) +
+    ylab('Predicted vs Actual Value (rho)')+
+    xlab('')+
+  guides(color = "none") +
+    scale_color_manual(values = c(cortisol_color, placebo_color))+
+    theme_classic() +
+  facet_grid(stim~.)
+altvis_arous_crossrun
+
+pdf("plots/cpm_generalization_across_stim.pdf",height=2.5,width = 4)
+print(altvis_mem_crossrun)
+print(altvis_arous_crossrun)
+dev.off()
+```
+
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

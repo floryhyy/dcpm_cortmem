@@ -1,0 +1,9 @@
+behavior_col,stim_col,pill_col,mean_rho,pos_net_size,neg_net_size
+RecogAcc_coded,alc,cortisol,0.123896966391082,521,111
+RecogAcc_coded,alc,placebo,0.09931056648891,192,217
+RecogAcc_coded,tool,cortisol,0.1879446090761,582,371
+RecogAcc_coded,tool,placebo,0.213704078998925,515,2423
+Arous_All,alc,cortisol,0.360944760008192,3873,796
+Arous_All,alc,placebo,0.43246327686515,1279,537
+Arous_All,tool,cortisol,0.425878241208372,2180,3099
+Arous_All,tool,placebo,0.498138128109468,854,2154

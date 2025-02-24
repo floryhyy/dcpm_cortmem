@@ -1,0 +1,9 @@
+train on,test on,pill,behavior,rho,temp_p,pos network,neg network
+tool,alc,cortisol,RecogAcc_coded,NaN,NaN,582,371
+tool,alc,placebo,RecogAcc_coded,0.0738157188190718,0.0177629804881944,515,2423
+alc,tool,cortisol,RecogAcc_coded,0.0240088768648861,0.440586216000118,521,111
+alc,tool,placebo,RecogAcc_coded,0.210775112369254,8.11216274858954e-12,192,217
+tool,alc,cortisol,Arous_All,0.288089404391277,1.06718919279392e-20,2180,3099
+tool,alc,placebo,Arous_All,0.302181111705243,3.9749014248196e-23,854,2154
+alc,tool,cortisol,Arous_All,0.345331921819652,2.05847416747358e-29,3873,796
+alc,tool,placebo,Arous_All,0.341107442086135,2.73068400540674e-29,1279,537
