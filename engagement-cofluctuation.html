@@ -1632,8 +1632,7 @@ display: none;
 <pre><code>## Loading required package: nlme</code></pre>
 <pre class="r"><code>require(ggplot2)</code></pre>
 <pre><code>## Loading required package: ggplot2</code></pre>
-<pre class="r"><code>#require(tidyverse)
-library(sjPlot)
+<pre class="r"><code>library(sjPlot)
 library(lme4)</code></pre>
 <pre><code>## Loading required package: Matrix</code></pre>
 <pre><code>## 
@@ -1642,7 +1641,6 @@ library(lme4)</code></pre>
 ## 
 ##     lmList</code></pre>
 <pre class="r"><code>library(emmeans)
-#library(ordinal)
 library(dplyr)</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;dplyr&#39;</code></pre>
@@ -1781,6 +1779,34 @@ m &lt;- lme(cofluc ~ Pill*Stim, random=~1 | sub_id, data=dat, na.action = na.omi
 print(anova(m)[&quot;Pill:Stim&quot;,])</code></pre>
 <pre><code>##           numDF denDF   F-value p-value
 ## Pill:Stim     1    75 0.4863194  0.4877</code></pre>
+</div>
+<div id="figure-5c-data-generation" class="section level1">
+<h1>Figure 5C data generation</h1>
+<pre class="r"><code>filename&lt;-(&quot;results/network_strength/summary_table_pos_neg_sep_byTrial.csv&quot;)
+dat&lt;-data.frame(read.csv(filename))
+dat &lt;- dat%&gt;%
+  # First, fill Arous_All and RecogAcc_coded within each trial, sub_id, Pill, Stim combination
+  group_by(trial_id, sub_id, Pill, Stim) %&gt;%
+  mutate(
+    Arous_All = ifelse(pheno == &quot;RecogAcc_coded&quot;, 
+                       Arous_All[pheno == &quot;Arous_All&quot;], 
+                       Arous_All),
+    RecogAcc_coded = ifelse(pheno == &quot;Arous_All&quot;, 
+                            RecogAcc_coded[pheno == &quot;RecogAcc_coded&quot;], 
+                            RecogAcc_coded)
+  ) %&gt;%
+  ungroup() %&gt;%
+  # Then proceed with the difference calculation
+  group_by(trial_id, sub_id, Pill, Stim, pheno) %&gt;%
+  summarize(
+    pos_conn = conn[direction == &quot;pos&quot;],
+    neg_conn = conn[direction == &quot;neg&quot;],
+    conn_diff = conn[direction == &quot;pos&quot;] - conn[direction == &quot;neg&quot;],
+    Arous_All = first(Arous_All),
+    RecogAcc_coded = first(RecogAcc_coded),
+    .groups = &quot;drop&quot;
+  )
+write.csv(dat, &quot;results/network_strength/summary_table_pos_neg_sep_byTrial_behaviorFilled.csv&quot;, row.names=FALSE)</code></pre>
 <p>Note that the <code>echo = FALSE</code> parameter was added to the
 code chunk to prevent printing of the R code that generated the
 plot.</p>
