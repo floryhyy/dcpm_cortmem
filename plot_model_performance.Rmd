@@ -1,5 +1,5 @@
 ---
-title: "null_distribution"
+title: "model performance"
 output: html_document
 date: "2023-09-08"
 ---
@@ -71,7 +71,7 @@ create_data<-function(across_construct=FALSE,across_stim=FALSE){
 }
 ```
 
-# alt vis (for paper) plotting model success vs null distribution
+# plotting model success vs null distribution
 ```{r}
 # plot<-model_dataframe_plot %>% 
 #          mutate(pill = factor(pill, labels = c("Cortisol", "Placebo")),
@@ -118,7 +118,8 @@ print(fig_model_altvis_arous)
 print(fig_model_altvis_mem)
 dev.off()
 ```
-# alt vis (for paper) generalization across construct
+
+# generalization across construct
 ```{r}
 data<-create_data(across_construct = TRUE)
 # model performance using arousal edges to predict  memory
@@ -160,7 +161,8 @@ print(altvis_mem2arous)
 print(altvis_arous2mem)
 dev.off()
 ```
-# alt vis (for paper) generalization across stim
+
+# generalization across stim
 ```{r}
 
 data<-create_data(across_stim = TRUE)
@@ -201,6 +203,29 @@ pdf("plots/cpm_generalization_across_stim.pdf",height=2.5,width = 4)
 print(altvis_mem_crossrun)
 print(altvis_arous_crossrun)
 dev.off()
+```
+
+# brain x behav for construct generalization
+```{r}
+
+brainxbehav <- read.csv('results/network_strength/summary_table_pos_neg_sep_byTrial_behaviorFilled.csv')
+
+plot.mem2mem = ggplot(brainxbehav %>% filter(pheno=="RecogAcc_coded" & Stim=="alc"), aes(x = conn_diff, y = RecogAcc_coded, color = Pill, fill= Pill)) + 
+  geom_smooth(method = "glm") + 
+  scale_color_manual(values = c(cortisol_color, placebo_color)) +
+  scale_fill_manual(values = c(cortisol_color, placebo_color)) +
+  theme_classic()
+
+print(plot.mem2mem)
+
+plot.mem2arous = ggplot(brainxbehav %>% filter(pheno=="RecogAcc_coded" & Stim=="alc"), aes(x = conn_diff, y = Arous_All, color = Pill, fill= Pill)) + 
+  geom_smooth(method = "lm") + 
+  scale_color_manual(values = c(cortisol_color, placebo_color)) +
+  scale_fill_manual(values = c(cortisol_color, placebo_color)) +
+  theme_classic() 
+
+print(plot.mem2arous)
+
 ```
 
 
