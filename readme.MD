@@ -18,7 +18,7 @@
   - 'network anatomical heatmap' python code for plotting distribution of edges in the network, Figure 2D-E,Figure S2, S4
   - 'network anatomical overlap' python code for analysis under section "Cortisol changes which edges are involved in predictive networks "; result in Table S2-4; generate data for plot Figure3 and Figure S3
   - 'overlap_vis' R code to generate plot for overlapping egeds between networks (Figure 3 and Figure S3)
-  - 'plot_model_performance' R code for plotting prediction performance of the networks. Figure 2C; 5C-D
+  - 'plot_model_performance' R code for plotting prediction performance of the networks. Figure 2C; 5
   - 'other data curation.ipynb' analysis demographic data and trials used in each prediction model
 
 # file/varible name mapping
