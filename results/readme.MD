@@ -9,7 +9,7 @@
   - 2. ".*overlap_percent.txt"
   - these files contain percentage of overlap for networks within a construct or across constructs.
 
-# dynamic_connectivity
+# dynamic_connectivity - currently not uploaded due to github file size limitation
  - this folder contains dynamic connectivity matrices.
  - each .mat file contains 3 variables:
      X: (total_trials,377,377) conn matrix for all subjects, all trials.
@@ -19,3 +19,5 @@
  - within per subj folder contains the matrices for each subject individually. within each file, the matrix has shape (n_trials, 377, 377), aka there is one conn matrix per trial.
 
 
+# network_strength
+ - this folder contains strength measurement of each network (averaged connectivity within the network) at each TR, and engagement and co-fluctuation measurement obtained from it. 
