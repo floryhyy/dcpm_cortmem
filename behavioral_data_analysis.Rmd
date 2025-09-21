@@ -50,6 +50,17 @@ dat_cort <- read.csv("data/behavior/cortisol_data.csv")
 
 # drop NA values in Avg
 dat_cort <- na.omit(dat_cort)
+# exclude subj with incomplete data
+dat_cort<-dat_cort[dat_cort$Subject!="9029",]
+# main effect
+m<-lme(Avg ~ Condition+desc,random=~1 | Subject,data=dat_cort)
+a<-anova(m, type='marginal')
+print(a)
+
+# interaction
+m<-lme(Avg ~ Condition*desc,random=~1 | Subject,data=dat_cort)
+twoway_anova<-anova(m, type='marginal')
+print(twoway_anova["Condition:desc",])
 
 # dotplot
 p<-ggplot(dat_cort, aes(x = desc, y = Avg, fill = Condition)) +
