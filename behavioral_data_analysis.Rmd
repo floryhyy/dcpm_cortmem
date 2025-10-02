@@ -1,7 +1,7 @@
 ---
 title: "Behavioral Data Analysis"
 output: html_document
-date: "2024-01-29"
+date: "2025-10-2"
 ---
 
 ```{r setup, include=FALSE}
@@ -35,15 +35,56 @@ installed.packages()[names(sessionInfo()$otherPkgs), "Version"]
 ```
 ## color setting
 ```{r}
-
 memory_color = '#4573e0'
 arousal_color = '#45b4af'
 cortisol_color ='#e06545'
 placebo_color = '#b44582' 
+```
+
+
+## cortisol data
+```{r}
+# read CSV
+dat_cort <- read.csv("data/behavior/cortisol_data.csv")
+
+# drop NA values in Avg
+dat_cort <- na.omit(dat_cort)
+# exclude subj with incomplete data
+dat_cort<-dat_cort[dat_cort$Subject!="9029",]
+# main effect
+m<-lme(Avg ~ Condition+desc,random=~1 | Subject,data=dat_cort)
+a<-anova(m, type='marginal')
+print(a)
+
+# interaction
+m<-lme(Avg ~ Condition*desc,random=~1 | Subject,data=dat_cort)
+twoway_anova<-anova(m, type='marginal')
+print(twoway_anova["Condition:desc",])
+
+# plot figure1B
+p<-ggplot(dat_cort, aes(x = desc, y = Avg, fill = Condition)) +
+  geom_boxplot(position = position_dodge(width =1),
+               alpha = 0.8, outlier.shape = NA) +
+  geom_dotplot(aes(fill = Condition),
+               binaxis = "y", stackdir = "center",
+               dotsize = 0.7, binwidth = 0.3,
+               alpha = 0.5, stroke = 0,   # remove outlines
+               position = position_dodge(width = 1)) +
+  scale_fill_manual(values = c("Cortisol" = cortisol_color, "Placebo" = placebo_color)) +
+  scale_x_discrete(labels = c("baseline", "post_drug", "post-encoding")) +
+  labs(x = "", y = "cortisol: nmol/L") +
+  theme_classic() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "right"
+  )
+p
+ggsave("plots/Fig1_cortisol_level.png", p, width = 8, height = 5)
+ggsave("plots/Fig1_cortisol_level.pdf", p, width = 8, height = 5)
 
 ```
 
-## data loading
+## behavior data loading
 ```{r}
 filename='data/behavior/mem_allsub_alltrial_pill.csv'
 dat<-data.frame(read.csv(filename))
@@ -59,26 +100,49 @@ dat$Stim<-factor(dat$Stim)
 dat$Pill<-factor(dat$Pill)
 dat<-dat[!is.na(dat$Arous_All),]
 dat<-dat[!is.na(dat$RecogAcc_coded),]
-
+# re-code encoding trial to 1-80
+dat$enctrial_cont<-(dat$StimOrd-1)*40+dat$Enc_Trial
 ```
 
 ## Main text:Effects of cortisol on emotional memory
-
 ```{r} 
 # variable names:
-
 dat1<-dat %>%
         mutate(RecogAcc_coded = ifelse(RecogAcc_coded==0,'F',ifelse(RecogAcc_coded==1,'R',NA)),
+      RecogAcc_coded = factor(RecogAcc_coded, levels = c("R", "F"))
                )
-
 # 2way interaction - interaction of pill and memory on arousal
-m<-lme(Arous_All ~ Enc_Trial+Stim+Pill*RecogAcc_coded,random=~1 | Subject,data=dat1)
+m<-lme(Arous_All ~ enctrial_cont+Stim+Pill*RecogAcc_coded,random=~1 | Subject,data=dat1)
 twoway_anova<-anova(m, type='marginal')
 print(twoway_anova["Pill:RecogAcc_coded",])
+t_test<-test(emmeans(m, pairwise ~ RecogAcc_coded|Pill))
+print(t_test)
+#mean & sd
+dat1 %>%
+  group_by(Pill, RecogAcc_coded) %>%
+  summarise(
+    mean_Arous = mean(Arous_All, na.rm = TRUE),
+    sd_Arous   = sd(Arous_All, na.rm = TRUE),
+    n          = n(),
+    .groups = "drop"
+  )
+
+# plot figure 1D - cortisol effect on arousing memory
+p<-plot_model(m,type="eff",terms=c("Pill","RecogAcc_coded"),colors=c(adjustcolor( memory_color, alpha.f = 0.4),adjustcolor( memory_color, alpha.f = 1),memory_color),dodge = .5, ci.lvl = .95, title = "")+  labs(x = "", y = "Arousal",colour="Memory") + theme_classic()  +theme(
+    axis.title = element_text(size = 14,face = "bold"),    # Axis labels
+    axis.text = element_text(size = 12),     # Axis tick labels
+    legend.title = element_text(size = 14),  # Legend title
+    legend.text = element_text(size = 14),    # Legend labels
+    strip.text = element_text(size = 14)  # Panel titles
+  )
+p
+ggsave("plots/Fig1_arousing_memory.png", p, width = 8, height = 4)
+ggsave("plots/Fig1_arousing_memory.pdf", p, width = 8, height = 4)
+
 
 # 3way interaction - between Memory, Pill, and Run
 # "This interaction was particularly evident during emotional runs (run x pill x memory: F(1,4007) = 7.20, p = .007; Figure S1A)."
-m<-lme(Arous_All ~ Enc_Trial+Stim*Pill*RecogAcc_coded,random=~1 | Subject,data=dat1)
+m<-lme(Arous_All ~ enctrial_cont+Stim*Pill*RecogAcc_coded,random=~1 | Subject,data=dat1)
 threeway_anova<-anova(m,type='marginal')
 threeway_anova["Stim:Pill:RecogAcc_coded",]
 
@@ -90,28 +154,58 @@ p<-plot_model(m,type="eff",terms=c("Pill","RecogAcc_coded","Stim"),colors=c(adju
     legend.text = element_text(size = 14),    # Legend labels
     strip.text = element_text(size = 14)  # Panel titles
   )
-ggsave("plots/FigS1_arousing_memory.png", p, width = 8, height = 4)
-ggsave("plots/FigS1_arousing_memory.pdf", p, width = 8, height = 4)
 p
+ggsave("plots/FigS1_arousing_memory_byRun.png", p, width = 8, height = 4)
+ggsave("plots/FigS1_arousing_memory_byRun.pdf", p, width = 8, height = 4)
 
 ```
 
 ## Supplement: behavioral data - arousal
 ```{r}
 # main effect of pill and stim on arousal
-# "We found that participants rated object/scene pairs as marginally more arousing under placebo (main effect pill: F(1, 4012) = 3.32, p = .07) and significantly more arousing during emotional runs (main effect run type: F(1,4012) = 56.30, p < .0001). "
+# "We found that participants rated object/scene pairs as marginally more arousing under placebo (F(1, 4012) = 3.35, p = .07; placebo: M = 2.04, SD = 0.94; cortisol: M = 1.99, SD = 0.88) and significantly more arousing during emotional runs (F(1, 4012) = 57.19, p < .0001; emotional: M = 2.10, SD = 0.94; neutral: M = 1.93, SD = 0.88). "
 
-m<-lme(Arous_All ~ Pill+Stim+Enc_Trial,random=~1 | Subject, data=dat, na.action=na.omit)
+m<-lme(Arous_All ~ Pill+Stim+enctrial_cont,random=~1 | Subject, data=dat, na.action=na.omit)
 maineffect_arousal<-anova(m,type='marginal')
 print(maineffect_arousal[c("Pill", "Stim"),])
 
+#mean & sd by Pill
+dat1 %>%
+  group_by(Pill) %>%
+  summarise(
+    mean_Arous = mean(Arous_All, na.rm = TRUE),
+    sd_Arous   = sd(Arous_All, na.rm = TRUE),
+    n          = n(),
+    .groups = "drop"
+  )
+
+#mean & sd by Run
+dat1 %>%
+  group_by(Stim) %>%
+  summarise(
+    mean_Arous = mean(Arous_All, na.rm = TRUE),
+    sd_Arous   = sd(Arous_All, na.rm = TRUE),
+    n          = n(),
+    .groups = "drop"
+  )
+
 # simple and interaction effect of pill and stim on arousal
-# "In a separate model that allowed for interactions between pill and run type, we found that this boost in arousal for emotional runs was more evident under placebo conditions (Pill x Run: F(1,4011) = 4.21, p = .04; emotional cortisol vs emotional placebo: t(4011) = -2.74, p = .03； Fig S1B)."
-m<-lme(Arous_All ~ Pill*Stim+Enc_Trial,random=~1 | Subject, data=dat, na.action=na.omit)
+# "In a separate model that allowed for interactions between pill and run type  (Pill × Run: F(1, 4011) = 4.18, p = .04), we found that this boost in arousal for emotional runs was more evident under placebo conditions (M = 2.15, SD = 0.98) than cortisol conditions (M = 2.06, SD = 0.89; t(4011) = –2.74, p = .03; Supplementary Fig. 1B)."
+m<-lme(Arous_All ~ Pill*Stim+enctrial_cont,random=~1 | Subject, data=dat, na.action=na.omit)
 interaction_arousal<-anova(m,type='marginal')
 print(interaction_arousal[c("Pill:Stim"),])
 contrast_arousal<-test(emmeans(m, pairwise~ Pill:Stim))
 print(contrast_arousal$contrasts[grep("Cortisol Emotional - Placebo Emotional", contrast_arousal$contrasts$contrast), ])
+
+# mean & sd
+dat1 %>%
+  group_by(Pill,Stim) %>%
+  summarise(
+    mean_Arous = mean(Arous_All, na.rm = TRUE),
+    sd_Arous   = sd(Arous_All, na.rm = TRUE),
+    n          = n(),
+    .groups = "drop"
+  )
 
 # create figure S1B
 p<-plot_model(m,type="eff",terms=c("Stim","Pill"),ci.lvl = .95) +scale_color_manual(  name="",labels=c("Cortisol", "Placebo"),values = c(cortisol_color, placebo_color)) +labs(x = "", y = "Arousal",title="")  +theme_classic()+theme(
@@ -124,19 +218,20 @@ p<-plot_model(m,type="eff",terms=c("Stim","Pill"),ci.lvl = .95) +scale_color_man
 ggsave("plots/FigS1_arousing.png", p, width = 8, height = 4)
 ggsave("plots/FigS1_arousing.pdf", p, width = 8, height = 4)
 p
+
 ```
 
 ## Supplement: behavioral data - memory
 ```{r}
-# "In contrast, there were no significant S differences in memory based on run or pill (all p > 0.05)."
+# "In contrast, there were no significant differences in memory based on run or pill (all p > 0.05)."
 
 # main effect of pill and stim on mem
-m<-glmer(RecogAcc_coded ~ Pill+Stim+Enc_Trial+(1|Subject), family=binomial, data=dat)
+m<-glmer(RecogAcc_coded ~ Pill+Stim+enctrial_cont+(1|Subject)+StimOrd, family=binomial, data=dat)
 print(Anova(m,type="II"))
 
 # simple and interaction effect of pill and stim on mem
-m<-glmer(RecogAcc_coded ~ Pill*Stim+Enc_Trial+(1|Subject), family=binomial, data=dat)
+m<-glmer(RecogAcc_coded ~ Pill*Stim+enctrial_cont+(1|Subject), family=binomial, data=dat)
 print(Anova(m,type="II"))
 
-
 ```
+
